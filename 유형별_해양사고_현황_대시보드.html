@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>유형별 해양사고 현황 대시보드</title>
+  <style>
+    :root {
+      --bg:#f5f7fb; --panel:#ffffff; --ink:#172033; --muted:#667085; --line:#d9e1ec;
+      --primary:#155eef; --primary2:#0b3b8f; --accent:#f97316; --good:#047857; --shadow:0 12px 30px rgba(16,24,40,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+    header{background:linear-gradient(135deg,#0b1f49,#155eef);color:#fff;padding:34px 24px 42px}
+    .wrap{max-width:1220px;margin:0 auto}
+    h1{margin:0;font-size:clamp(28px,4vw,44px);letter-spacing:-.04em}
+    .subtitle{margin-top:10px;color:#dbeafe;font-size:15px}
+    main{max-width:1220px;margin:-24px auto 48px;padding:0 18px}
+    .section{background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:22px;padding:22px;margin-bottom:18px}
+    .section h2{margin:0 0 14px;font-size:20px;letter-spacing:-.02em}
+    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+    .card .label{font-size:13px;color:var(--muted)}
+    .card .value{font-size:28px;font-weight:800;margin-top:8px;letter-spacing:-.03em}
+    .card.highlight{border-color:#fed7aa;background:linear-gradient(180deg,#fff7ed,#fff)}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#eef4ff;color:#1849a9;font-size:12px;font-weight:700}
+    .filters{display:grid;grid-template-columns:1.4fr repeat(2,.7fr) 1fr auto;gap:12px;align-items:end}
+    label{display:block;font-size:12px;font-weight:700;color:#344054;margin-bottom:6px}
+    input,select,button{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:11px 12px;font-size:14px;background:#fff;color:var(--ink)}
+    button{cursor:pointer;background:var(--primary);color:#fff;border-color:var(--primary);font-weight:800}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    canvas{width:100%;height:320px;border:1px solid var(--line);border-radius:18px;background:#fff}
+    .chart-note{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}
+    table{width:100%;border-collapse:collapse;min-width:980px;background:#fff}
+    th,td{padding:11px 12px;border-bottom:1px solid #edf2f7;text-align:right;white-space:nowrap}
+    th:first-child,td:first-child{text-align:center;position:sticky;left:0;background:inherit}
+    thead th{background:#f8fafc;color:#344054;font-size:13px}
+    tbody tr:hover{background:#f8fbff}
+    tfoot td{background:#f1f5f9;font-weight:800}
+    .badge-top{background:#fff1e6;color:#c2410c;border:1px solid #fed7aa;border-radius:999px;padding:4px 8px;font-weight:800}
+    .footer{text-align:center;color:#667085;font-size:12px;margin-top:18px}
+    @media (max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}}
+    @media (max-width:560px){.cards,.filters{grid-template-columns:1fr}header{padding:28px 18px 38px}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>유형별 해양사고 현황 대시보드</h1>
+    <div class="subtitle">데이터 기간: <strong>1998년 ~ 2012년</strong> · CP949 CSV 원본 기반 정적 HTML 대시보드</div>
+  </div>
+</header>
+<main>
+  <section class="cards" aria-label="요약 카드">
+    <article class="card"><div class="label">전체 사고 건수</div><div class="value" id="cardTotal">-</div></article>
+    <article class="card"><div class="label">연평균 사고 건수</div><div class="value" id="cardAvg">-</div></article>
+    <article class="card highlight"><div class="label">최다 발생 유형</div><div class="value" id="cardTopType">-</div><div id="cardTopCount" class="chip">-</div></article>
+    <article class="card"><div class="label">최다 발생 연도</div><div class="value" id="cardMaxYear">-</div><div id="cardMaxYearCount" class="chip">-</div></article>
+  </section>
+
+  <section class="section">
+    <h2>검색·필터</h2>
+    <div class="filters">
+      <div><label for="searchInput">텍스트 검색</label><input id="searchInput" placeholder="연도 또는 사고 유형 검색 예: 2011, 충돌, 기관손상" /></div>
+      <div><label for="startYear">시작 연도</label><select id="startYear"></select></div>
+      <div><label for="endYear">종료 연도</label><select id="endYear"></select></div>
+      <div><label for="typeFilter">사고 유형 선택</label><select id="typeFilter"><option value="전체">전체 유형</option></select></div>
+      <div><label>&nbsp;</label><button id="resetBtn">초기화</button></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>시각화</h2>
+    <div class="grid-2">
+      <div><canvas id="trendChart" width="640" height="320"></canvas><div class="chart-note">연도별 총 사고 건수 추이입니다. 사고 유형 필터 선택 시 해당 유형의 연도별 추이로 전환됩니다.</div></div>
+      <div><canvas id="barChart" width="640" height="320"></canvas><div class="chart-note">선택한 연도 범위의 사고 유형별 합계입니다. 가장 많이 발생한 유형은 주황색으로 강조됩니다.</div></div>
+      <div><canvas id="recentChart" width="640" height="320"></canvas><div class="chart-note">최근 5개 연도 추이입니다. 사고 유형 필터와 연동되어 총계 또는 선택 유형을 비교합니다.</div></div>
+      <div class="section" style="box-shadow:none;margin:0;background:#f8fafc"><h2>최다 발생 유형 강조</h2><p id="topExplain" style="line-height:1.8;color:#344054;margin:0"></p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>연도별 데이터 표</h2>
+    <div class="table-wrap"><table id="dataTable"></table></div>
+  </section>
+  <div class="footer">본 페이지는 첨부 CSV 데이터를 브라우저에서 바로 볼 수 있도록 만든 대외 공개용 정적 대시보드입니다.</div>
+</main>
+<script>
+const DATA = [{"시점": 1998, "총계": 772, "충돌": 147, "접촉": 5, "좌초": 77, "전복": 14, "화재/폭발": 60, "침몰": 84, "행방불명": 4, "기관손상": 242, "추진기손상": 24, "키손상": 10, "속구손상": 2, "조난": 48, "시설물손상": 4, "인명사상": 8, "안전운항저해": 43, "해양오염": 0, "기타": 0}, {"시점": 1999, "총계": 849, "충돌": 173, "접촉": 2, "좌초": 68, "전복": 27, "화재/폭발": 67, "침몰": 90, "행방불명": 4, "기관손상": 269, "추진기손상": 18, "키손상": 15, "속구손상": 2, "조난": 24, "시설물손상": 2, "인명사상": 13, "안전운항저해": 73, "해양오염": 2, "기타": 0}, {"시점": 2000, "총계": 634, "충돌": 130, "접촉": 11, "좌초": 58, "전복": 19, "화재/폭발": 48, "침몰": 63, "행방불명": 2, "기관손상": 196, "추진기손상": 8, "키손상": 5, "속구손상": 1, "조난": 23, "시설물손상": 0, "인명사상": 19, "안전운항저해": 51, "해양오염": 0, "기타": 0}, {"시점": 2001, "총계": 610, "충돌": 141, "접촉": 15, "좌초": 60, "전복": 21, "화재/폭발": 62, "침몰": 72, "행방불명": 1, "기관손상": 135, "추진기손상": 8, "키손상": 6, "속구손상": 1, "조난": 25, "시설물손상": 1, "인명사상": 17, "안전운항저해": 44, "해양오염": 1, "기타": 0}, {"시점": 2002, "총계": 557, "충돌": 184, "접촉": 13, "좌초": 58, "전복": 29, "화재/폭발": 42, "침몰": 55, "행방불명": 0, "기관손상": 110, "추진기손상": 9, "키손상": 3, "속구손상": 0, "조난": 18, "시설물손상": 3, "인명사상": 20, "안전운항저해": 13, "해양오염": 0, "기타": 0}, {"시점": 2003, "총계": 531, "충돌": 182, "접촉": 9, "좌초": 65, "전복": 22, "화재/폭발": 53, "침몰": 50, "행방불명": 2, "기관손상": 57, "추진기손상": 12, "키손상": 1, "속구손상": 2, "조난": 21, "시설물손상": 0, "인명사상": 43, "안전운항저해": 12, "해양오염": 0, "기타": 0}, {"시점": 2004, "총계": 804, "충돌": 210, "접촉": 12, "좌초": 75, "전복": 35, "화재/폭발": 57, "침몰": 69, "행방불명": 1, "기관손상": 147, "추진기손상": 17, "키손상": 12, "속구손상": 0, "조난": 45, "시설물손상": 1, "인명사상": 80, "안전운항저해": 42, "해양오염": 1, "기타": 0}, {"시점": 2005, "총계": 658, "충돌": 172, "접촉": 10, "좌초": 46, "전복": 22, "화재/폭발": 71, "침몰": 45, "행방불명": 1, "기관손상": 166, "추진기손상": 17, "키손상": 14, "속구손상": 0, "조난": 16, "시설물손상": 2, "인명사상": 34, "안전운항저해": 41, "해양오염": 1, "기타": 0}, {"시점": 2006, "총계": 657, "충돌": 167, "접촉": 17, "좌초": 66, "전복": 16, "화재/폭발": 41, "침몰": 25, "행방불명": 0, "기관손상": 195, "추진기손상": 11, "키손상": 14, "속구손상": 0, "조난": 11, "시설물손상": 1, "인명사상": 20, "안전운항저해": 68, "해양오염": 5, "기타": 0}, {"시점": 2007, "총계": 566, "충돌": 148, "접촉": 9, "좌초": 39, "전복": 21, "화재/폭발": 37, "침몰": 19, "행방불명": 1, "기관손상": 185, "추진기손상": 4, "키손상": 17, "속구손상": 0, "조난": 8, "시설물손상": 1, "인명사상": 11, "안전운항저해": 65, "해양오염": 1, "기타": 0}, {"시점": 2008, "총계": 480, "충돌": 125, "접촉": 15, "좌초": 32, "전복": 8, "화재/폭발": 25, "침몰": 18, "행방불명": 0, "기관손상": 145, "추진기손상": 7, "키손상": 14, "속구손상": 0, "조난": 11, "시설물손상": 2, "인명사상": 17, "안전운항저해": 61, "해양오염": 0, "기타": 0}, {"시점": 2009, "총계": 723, "충돌": 160, "접촉": 10, "좌초": 43, "전복": 18, "화재/폭발": 34, "침몰": 22, "행방불명": 2, "기관손상": 253, "추진기손상": 16, "키손상": 29, "속구손상": 0, "조난": 16, "시설물손상": 1, "인명사상": 21, "안전운항저해": 96, "해양오염": 2, "기타": 0}, {"시점": 2010, "총계": 737, "충돌": 174, "접촉": 22, "좌초": 64, "전복": 17, "화재/폭발": 25, "침몰": 22, "행방불명": 0, "기관손상": 236, "추진기손상": 8, "키손상": 24, "속구손상": 1, "조난": 9, "시설물손상": 4, "인명사상": 33, "안전운항저해": 91, "해양오염": 7, "기타": 0}, {"시점": 2011, "총계": 946, "충돌": 208, "접촉": 23, "좌초": 64, "전복": 38, "화재/폭발": 57, "침몰": 27, "행방불명": 0, "기관손상": 261, "추진기손상": 13, "키손상": 18, "속구손상": 1, "조난": 41, "시설물손상": 4, "인명사상": 82, "안전운항저해": 101, "해양오염": 8, "기타": 0}, {"시점": 2012, "총계": 726, "충돌": 157, "접촉": 21, "좌초": 53, "전복": 25, "화재/폭발": 55, "침몰": 26, "행방불명": 11, "기관손상": 178, "추진기손상": 7, "키손상": 13, "속구손상": 0, "조난": 44, "시설물손상": 3, "인명사상": 57, "안전운항저해": 68, "해양오염": 8, "기타": 0}];
+const ACCIDENT_TYPES = ["충돌", "접촉", "좌초", "전복", "화재/폭발", "침몰", "행방불명", "기관손상", "추진기손상", "키손상", "속구손상", "조난", "시설물손상", "인명사상", "안전운항저해", "해양오염", "기타"];
+const BASE_SUMMARY = {"period": "1998년 ~ 2012년", "yearCount": 15, "total": 10250, "avg": 683.3, "topType": "기관손상", "topTotal": 2775, "maxYear": 2011, "maxYearTotal": 946};
+const YEARS = DATA.map(d => Number(d['시점']));
+const nf = new Intl.NumberFormat('ko-KR');
+
+const els = {
+  search: document.getElementById('searchInput'), start: document.getElementById('startYear'), end: document.getElementById('endYear'), type: document.getElementById('typeFilter'), reset: document.getElementById('resetBtn'), table: document.getElementById('dataTable'),
+  cardTotal: document.getElementById('cardTotal'), cardAvg: document.getElementById('cardAvg'), cardTopType: document.getElementById('cardTopType'), cardTopCount: document.getElementById('cardTopCount'), cardMaxYear: document.getElementById('cardMaxYear'), cardMaxYearCount: document.getElementById('cardMaxYearCount'), topExplain: document.getElementById('topExplain')
+};
+
+function initControls(){
+  YEARS.forEach(y=>{ els.start.add(new Option(y+'년', y)); els.end.add(new Option(y+'년', y)); });
+  els.start.value = Math.min(...YEARS); els.end.value = Math.max(...YEARS);
+  ACCIDENT_TYPES.forEach(t=>els.type.add(new Option(t, t)));
+}
+
+function normalizeText(v){ return String(v ?? '').trim().toLowerCase(); }
+
+function inferredTypeFromSearch(){
+  const q = normalizeText(els.search.value);
+  if(!q) return null;
+  return ACCIDENT_TYPES.find(t => {
+    const n = normalizeText(t);
+    return q === n || q.includes(n) || n.includes(q);
+  }) || null;
+}
+
+function effectiveType(){
+  return els.type.value !== '전체' ? els.type.value : (inferredTypeFromSearch() || '전체');
+}
+
+function filteredData(){
+  let s = Number(els.start.value), e = Number(els.end.value);
+  if(s > e) [s,e] = [e,s];
+  const qRaw = normalizeText(els.search.value);
+  const matchedType = inferredTypeFromSearch();
+  const q = matchedType ? qRaw.replace(normalizeText(matchedType), '').trim() : qRaw;
+  return DATA.filter(row => {
+    const y = Number(row['시점']);
+    const inYear = y >= s && y <= e;
+    if(!inYear) return false;
+    if(!q) return true;
+    const rowText = [row['시점'], '총계', row['총계'], ...ACCIDENT_TYPES.flatMap(c => [c, row[c]])].join(' ').toLowerCase();
+    return rowText.includes(q);
+  });
+}
+
+function colsForTable(){
+  const type = effectiveType();
+  return type === '전체' ? ['시점','총계',...ACCIDENT_TYPES] : ['시점','총계',type];
+}
+
+function calcSummary(rows){
+  const selectedType = effectiveType();
+  const totalKey = selectedType === '전체' ? '총계' : selectedType;
+  const total = rows.reduce((a,r)=>a+Number(r[totalKey]||0),0);
+  const avg = rows.length ? total / rows.length : 0;
+  const typeTotals = Object.fromEntries(ACCIDENT_TYPES.map(c=>[c, rows.reduce((a,r)=>a+Number(r[c]||0),0)]));
+  const topType = ACCIDENT_TYPES.reduce((best,c)=> typeTotals[c] > typeTotals[best] ? c : best, ACCIDENT_TYPES[0]);
+  const maxRow = rows.reduce((best,r)=> !best || Number(r[totalKey]) > Number(best[totalKey]) ? r : best, null);
+  return {total, avg, typeTotals, topType, topTotal:typeTotals[topType], totalKey, maxRow};
+}
+
+function updateCards(rows){
+  const s = calcSummary(rows);
+  els.cardTotal.textContent = nf.format(s.total) + '건';
+  els.cardAvg.textContent = nf.format(Math.round(s.avg*10)/10) + '건';
+  els.cardTopType.textContent = s.topType || '-';
+  els.cardTopCount.textContent = nf.format(s.topTotal || 0) + '건';
+  els.cardMaxYear.textContent = s.maxRow ? s.maxRow['시점'] + '년' : '-';
+  els.cardMaxYearCount.textContent = s.maxRow ? nf.format(s.maxRow[s.totalKey]) + '건' : '-';
+  const selectedType = effectiveType();
+  const mode = selectedType === '전체' ? '전체 사고 유형 기준' : '선택/검색 유형(' + selectedType + ') 기준';
+  els.topExplain.innerHTML = `현재 필터 범위에서 <strong>${mode}</strong>으로 집계했습니다.<br>사고 유형별 합계를 비교하면 <span class="badge-top">${s.topType}</span>이(가) <strong>${nf.format(s.topTotal||0)}건</strong>으로 가장 큽니다.<br>연도별 추이 차트와 최근 5년 차트는 사고 유형 필터와 함께 자동 갱신됩니다.`;
+}
+
+function renderTable(rows){
+  const cols = colsForTable();
+  let html = '<thead><tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach(r=>{ html += '<tr>' + cols.map(c=>`<td>${c==='시점'? r[c]+'년' : nf.format(r[c]||0)}</td>`).join('') + '</tr>'; });
+  html += '</tbody><tfoot>';
+  if(rows.length){
+    const sumRow = cols.map(c=> c==='시점' ? '합계' : nf.format(rows.reduce((a,r)=>a+Number(r[c]||0),0)));
+    const avgRow = cols.map(c=> c==='시점' ? '평균' : nf.format(Math.round(rows.reduce((a,r)=>a+Number(r[c]||0),0)/rows.length*10)/10));
+    html += '<tr>' + sumRow.map(v=>`<td>${v}</td>`).join('') + '</tr>';
+    html += '<tr>' + avgRow.map(v=>`<td>${v}</td>`).join('') + '</tr>';
+  } else { html += `<tr><td colspan="${cols.length}">조건에 맞는 데이터가 없습니다.</td></tr>`; }
+  html += '</tfoot>';
+  els.table.innerHTML = html;
+}
+
+function clearCanvas(ctx,w,h){ctx.clearRect(0,0,w,h);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h)}
+function drawAxes(ctx,w,h,pad,title){
+  ctx.strokeStyle='#d9e1ec'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,h-pad); ctx.lineTo(w-pad,h-pad); ctx.stroke();
+  ctx.fillStyle='#172033'; ctx.font='700 16px Noto Sans KR, Arial'; ctx.fillText(title,pad,26);
+}
+function drawLineChart(canvas, rows, key, title){
+  const ctx=canvas.getContext('2d'), w=canvas.width, h=canvas.height, pad=48; clearCanvas(ctx,w,h); drawAxes(ctx,w,h,pad,title);
+  if(!rows.length) return;
+  const vals=rows.map(r=>Number(r[key]||0)), max=Math.max(...vals,1), min=0;
+  const x=i=> rows.length===1 ? w/2 : pad + i*(w-2*pad)/(rows.length-1);
+  const y=v=> h-pad - (v-min)*(h-2*pad-12)/(max-min || 1);
+  ctx.strokeStyle='#155eef'; ctx.lineWidth=3; ctx.beginPath(); vals.forEach((v,i)=> i?ctx.lineTo(x(i),y(v)):ctx.moveTo(x(i),y(v))); ctx.stroke();
+  rows.forEach((r,i)=>{ctx.fillStyle='#155eef'; ctx.beginPath(); ctx.arc(x(i),y(vals[i]),4,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#475467'; ctx.font='12px Arial'; ctx.textAlign='center'; ctx.fillText(String(r['시점']),x(i),h-18); ctx.fillText(nf.format(vals[i]),x(i),Math.max(42,y(vals[i])-10));});
+  ctx.textAlign='left'; ctx.fillStyle='#667085'; ctx.font='12px Arial'; ctx.fillText('단위: 건',w-94,26);
+}
+function drawBarChart(canvas, rows){
+  const ctx=canvas.getContext('2d'), w=canvas.width, h=canvas.height, pad=68; clearCanvas(ctx,w,h); drawAxes(ctx,w,h,pad,'사고 유형별 합계');
+  const totals=ACCIDENT_TYPES.map(c=>({name:c,value:rows.reduce((a,r)=>a+Number(r[c]||0),0)})).sort((a,b)=>b.value-a.value);
+  const max=Math.max(...totals.map(d=>d.value),1), gap=8, barH=(h-2*pad)/totals.length-gap;
+  totals.forEach((d,i)=>{
+    const y=pad+i*(barH+gap)+8, bw=(w-2*pad)*(d.value/max);
+    ctx.fillStyle=i===0?'#f97316':'#155eef'; ctx.fillRect(pad,y,bw,barH);
+    ctx.fillStyle='#172033'; ctx.font='12px Noto Sans KR, Arial'; ctx.textAlign='right'; ctx.fillText(d.name,pad-8,y+barH*.7);
+    ctx.textAlign='left'; ctx.fillText(nf.format(d.value),pad+bw+6,y+barH*.7);
+  });
+}
+function renderAll(){
+  const rows=filteredData();
+  updateCards(rows); renderTable(rows);
+  const selectedType = effectiveType();
+  const key = selectedType === '전체' ? '총계' : selectedType;
+  drawLineChart(document.getElementById('trendChart'), rows, key, '연도별 ' + (key==='총계'?'총 사고':key) + ' 건수 추이');
+  drawBarChart(document.getElementById('barChart'), rows);
+  const recent = [...DATA].sort((a,b)=>Number(a['시점'])-Number(b['시점'])).slice(-5);
+  drawLineChart(document.getElementById('recentChart'), recent, key, '최근 5년 ' + (key==='총계'?'총 사고':key) + ' 추이');
+}
+
+initControls(); renderAll();
+['input','change'].forEach(ev=>{ els.search.addEventListener(ev,renderAll); els.start.addEventListener(ev,renderAll); els.end.addEventListener(ev,renderAll); els.type.addEventListener(ev,renderAll); });
+els.reset.addEventListener('click',()=>{ els.search.value=''; els.start.value=Math.min(...YEARS); els.end.value=Math.max(...YEARS); els.type.value='전체'; renderAll(); });
+</script>
+</body>
+</html>
