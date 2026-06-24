@@ -1,0 +1,1400 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>해양수산 정책 KPI 대시보드</title>
+    <style>
+:root {
+  color-scheme: light;
+  --bg: #f4f7fb;
+  --surface: #ffffff;
+  --surface-soft: #eef6f4;
+  --ink: #172033;
+  --muted: #647085;
+  --line: #d7dee9;
+  --line-strong: #b8c4d6;
+  --teal: #087f7a;
+  --blue: #2864b7;
+  --green: #26734d;
+  --amber: #b85f00;
+  --red: #b33434;
+  --purple: #6c5a96;
+  --shadow: 0 16px 38px rgba(24, 39, 75, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    linear-gradient(180deg, rgba(8, 127, 122, 0.1), rgba(244, 247, 251, 0) 310px),
+    var(--bg);
+  color: var(--ink);
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Segoe UI", sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.app-shell {
+  width: min(1440px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 26px 0 38px;
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.title-block {
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--teal);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+h2 {
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.file-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#csvInput {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.button {
+  min-height: 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.button:hover {
+  border-color: #8797ad;
+  transform: translateY(-1px);
+}
+
+.primary-button,
+.apply-button {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #ffffff;
+}
+
+.ghost-button {
+  color: var(--blue);
+}
+
+.drop-zone {
+  min-height: 96px;
+  border: 1px dashed #7da9a6;
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.86), rgba(238, 246, 244, 0.94)),
+    repeating-linear-gradient(135deg, rgba(8, 127, 122, 0.09) 0 1px, transparent 1px 18px);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  outline: none;
+}
+
+.drop-zone:focus-visible,
+.drop-zone.is-over {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 4px rgba(8, 127, 122, 0.16), var(--shadow);
+}
+
+.drop-zone.is-over {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.75), rgba(223, 242, 238, 0.98)),
+    repeating-linear-gradient(135deg, rgba(8, 127, 122, 0.16) 0 1px, transparent 1px 18px);
+}
+
+.drop-zone strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 18px;
+}
+
+.drop-zone p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.drop-mark {
+  inline-size: 54px;
+  block-size: 54px;
+  border: 1px solid rgba(8, 127, 122, 0.24);
+  border-radius: 8px;
+  background: #ffffff;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  padding: 12px;
+  flex: 0 0 auto;
+}
+
+.drop-mark span {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--teal), #5b8fc8);
+}
+
+.drop-mark span:nth-child(2) {
+  width: 72%;
+  background: linear-gradient(90deg, var(--amber), #d7a13c);
+}
+
+.drop-mark span:nth-child(3) {
+  width: 88%;
+  background: linear-gradient(90deg, var(--green), #74a46b);
+}
+
+.status-strip {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.3fr) repeat(2, minmax(110px, 0.7fr)) minmax(180px, 1.5fr);
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.status-strip > div {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 11px 12px;
+}
+
+.status-label {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.status-strip strong,
+.status-message {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.status-message {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 292px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.mapping-panel,
+.chart-panel,
+.preview-panel,
+.kpi-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 10px 28px rgba(24, 39, 75, 0.05);
+}
+
+.mapping-panel {
+  position: sticky;
+  top: 16px;
+  padding: 16px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.section-heading span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.mapping-form {
+  display: grid;
+  gap: 10px;
+}
+
+.field-row label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.field-row select {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--ink);
+  padding: 0 8px;
+}
+
+.field-row select.is-required-missing {
+  border-color: var(--amber);
+  background: #fff8ed;
+}
+
+.apply-button {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.dashboard {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kpi-card {
+  min-height: 132px;
+  padding: 16px;
+  border-top: 4px solid var(--teal);
+  display: grid;
+  align-content: space-between;
+}
+
+.kpi-card[data-tone="blue"] {
+  border-top-color: var(--blue);
+}
+
+.kpi-card[data-tone="amber"] {
+  border-top-color: var(--amber);
+}
+
+.kpi-card[data-tone="red"] {
+  border-top-color: var(--red);
+}
+
+.kpi-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.kpi-value {
+  margin: 8px 0 4px;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.kpi-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(330px, 0.75fr);
+  gap: 14px;
+}
+
+.chart-panel,
+.preview-panel {
+  padding: 16px;
+  min-width: 0;
+}
+
+.chart-panel.wide {
+  grid-row: span 2;
+}
+
+.chart-frame {
+  min-height: 316px;
+  display: grid;
+  align-items: center;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.axis,
+.tick-label,
+.chart-label,
+.chart-value,
+.empty-chart {
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Segoe UI", sans-serif;
+}
+
+.axis {
+  stroke: #718096;
+  stroke-width: 1;
+}
+
+.grid-line {
+  stroke: #e4e9f1;
+  stroke-width: 1;
+}
+
+.tick-label {
+  fill: #647085;
+  font-size: 11px;
+}
+
+.chart-label {
+  fill: #344054;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.chart-value {
+  fill: #1f2937;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.empty-chart {
+  fill: #647085;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.table-wrap {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 760px;
+}
+
+th,
+td {
+  border-bottom: 1px solid #edf1f6;
+  padding: 9px 10px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  color: var(--muted);
+  font-weight: 900;
+  z-index: 1;
+}
+
+td {
+  color: #2c3749;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+@media (max-width: 1120px) {
+  .workspace,
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mapping-panel {
+    position: static;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    width: min(100% - 20px, 1440px);
+    padding-top: 16px;
+  }
+
+  .topbar,
+  .drop-zone {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
+
+  .file-actions,
+  .button {
+    width: 100%;
+  }
+
+  .status-strip,
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-frame {
+    min-height: 250px;
+  }
+}
+
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="title-block">
+          <p class="eyebrow">해양수산 데이터 분석</p>
+          <h1>정책 KPI 대시보드</h1>
+        </div>
+        <div class="file-actions" aria-label="CSV 파일 작업">
+          <label class="button primary-button" for="csvInput">CSV 선택</label>
+          <input id="csvInput" type="file" accept=".csv,text/csv" />
+          <button class="button ghost-button" id="sampleButton" type="button">예시 데이터</button>
+        </div>
+      </header>
+
+      <section class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="CSV 파일 드래그 앤 드롭 또는 선택">
+        <div class="drop-mark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div>
+          <strong>CSV 파일을 여기에 놓기</strong>
+          <p id="fileMeta">CP949 또는 UTF-8 CSV를 자동으로 읽습니다.</p>
+        </div>
+      </section>
+
+      <section class="status-strip" aria-live="polite">
+        <div>
+          <span class="status-label">데이터셋</span>
+          <strong id="datasetName">업로드 대기</strong>
+        </div>
+        <div>
+          <span class="status-label">행 수</span>
+          <strong id="rowCount">0</strong>
+        </div>
+        <div>
+          <span class="status-label">기간</span>
+          <strong id="dateRange">-</strong>
+        </div>
+        <div class="status-message" id="statusMessage">CSV 파일을 드래그 앤 드롭하세요.</div>
+      </section>
+
+      <div class="workspace">
+        <aside class="mapping-panel">
+          <div class="section-heading">
+            <h2>컬럼 매핑</h2>
+            <span id="mappingHealth">대기</span>
+          </div>
+          <form class="mapping-form" id="mappingForm"></form>
+          <button class="button apply-button" id="applyMapping" type="button">매핑 적용</button>
+        </aside>
+
+        <main class="dashboard">
+          <section class="kpi-grid" id="kpiGrid" aria-label="주요 KPI"></section>
+
+          <section class="chart-grid">
+            <article class="chart-panel wide">
+              <div class="section-heading">
+                <h2>월별 수출액 추이</h2>
+                <span id="monthlySummary">-</span>
+              </div>
+              <div class="chart-frame" id="monthlyChart"></div>
+            </article>
+
+            <article class="chart-panel">
+              <div class="section-heading">
+                <h2>항만별 위판금액 TOP 5</h2>
+                <span id="portSummary">-</span>
+              </div>
+              <div class="chart-frame" id="portChart"></div>
+            </article>
+
+            <article class="chart-panel">
+              <div class="section-heading">
+                <h2>기상위험도별 사고 건수</h2>
+                <span id="riskSummary">-</span>
+              </div>
+              <div class="chart-frame" id="riskChart"></div>
+            </article>
+          </section>
+
+          <section class="preview-panel">
+            <div class="section-heading">
+              <h2>데이터 미리보기</h2>
+              <span id="previewSummary">상위 8행</span>
+            </div>
+            <div class="table-wrap">
+              <table id="previewTable"></table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <script>
+"use strict";
+
+const sampleCsv = `date,year,month,port_ko,catch_tons,landing_value_usd,export_value_usd,weather_risk_level,safety_incident_count,public_satisfaction_score
+2025-01-05,2025,1,부산항,12.8,58100,21600,Low,0,88.4
+2025-01-18,2025,1,인천항,8.7,34200,18100,Medium,1,81.2
+2025-02-03,2025,2,목포항,10.1,40100,15400,Medium,0,79.6
+2025-02-21,2025,2,부산항,16.4,72300,26400,High,2,84.1
+2025-03-09,2025,3,여수항,7.2,29800,11900,Low,0,86.8
+2025-03-28,2025,3,제주항,6.8,31600,13400,High,1,78.9
+2025-04-12,2025,4,부산항,15.5,68500,29200,Medium,1,85.5
+2025-04-26,2025,4,인천항,9.6,37700,20500,Low,0,82.7
+2025-05-08,2025,5,목포항,11.4,46300,17400,Medium,1,80.3
+2025-05-23,2025,5,포항항,8.2,33500,14100,Low,0,87.1
+2025-06-06,2025,6,여수항,13.7,51200,23600,High,2,76.5
+2025-06-19,2025,6,부산항,18.1,80200,31800,Medium,1,83.6`;
+
+const fieldDefinitions = [
+  {
+    key: "catch",
+    label: "총 어획량",
+    required: true,
+    aliases: ["catch_tons", "catch", "catchtons", "어획량", "총어획량", "어획톤수", "어획량톤"],
+  },
+  {
+    key: "export",
+    label: "총 수출액",
+    required: true,
+    aliases: ["export_value_usd", "export", "exportvalue", "exportamount", "수출액", "수출금액", "총수출액"],
+  },
+  {
+    key: "satisfaction",
+    label: "평균 만족도",
+    required: true,
+    aliases: ["public_satisfaction_score", "satisfaction", "satisfactionscore", "만족도", "평균만족도", "공공만족도"],
+  },
+  {
+    key: "accidents",
+    label: "안전사고 건수",
+    required: true,
+    aliases: ["safety_incident_count", "incidentcount", "accidentcount", "safetyincident", "안전사고건수", "안전사고", "사고건수"],
+  },
+  {
+    key: "port",
+    label: "항만",
+    required: true,
+    aliases: ["port_ko", "port", "portname", "harbor", "항만", "항구", "위판항", "항만명"],
+  },
+  {
+    key: "landing",
+    label: "위판금액",
+    required: true,
+    aliases: ["landing_value_usd", "landing", "landingvalue", "auctionamount", "위판금액", "위판액", "위판가", "판매금액"],
+  },
+  {
+    key: "risk",
+    label: "기상위험도",
+    required: true,
+    aliases: ["weather_risk_level", "weatherrisk", "risklevel", "risk", "기상위험도", "기상위험등급", "위험도"],
+  },
+  {
+    key: "date",
+    label: "날짜",
+    required: false,
+    aliases: ["date", "basedate", "recorddate", "일자", "날짜", "기준일", "조사일"],
+  },
+  {
+    key: "year",
+    label: "연도",
+    required: false,
+    aliases: ["year", "yyyy", "연도", "년도", "년"],
+  },
+  {
+    key: "month",
+    label: "월",
+    required: false,
+    aliases: ["month", "mm", "월", "월별", "월구분"],
+  },
+];
+
+const state = {
+  datasetName: "",
+  headers: [],
+  rows: [],
+  mapping: {},
+};
+
+const elements = {};
+
+document.addEventListener("DOMContentLoaded", () => {
+  cacheElements();
+  wireEvents();
+  renderEmptyDashboard();
+});
+
+function cacheElements() {
+  elements.csvInput = document.getElementById("csvInput");
+  elements.dropZone = document.getElementById("dropZone");
+  elements.sampleButton = document.getElementById("sampleButton");
+  elements.applyMapping = document.getElementById("applyMapping");
+  elements.mappingForm = document.getElementById("mappingForm");
+  elements.mappingHealth = document.getElementById("mappingHealth");
+  elements.kpiGrid = document.getElementById("kpiGrid");
+  elements.monthlyChart = document.getElementById("monthlyChart");
+  elements.portChart = document.getElementById("portChart");
+  elements.riskChart = document.getElementById("riskChart");
+  elements.monthlySummary = document.getElementById("monthlySummary");
+  elements.portSummary = document.getElementById("portSummary");
+  elements.riskSummary = document.getElementById("riskSummary");
+  elements.previewTable = document.getElementById("previewTable");
+  elements.previewSummary = document.getElementById("previewSummary");
+  elements.datasetName = document.getElementById("datasetName");
+  elements.rowCount = document.getElementById("rowCount");
+  elements.dateRange = document.getElementById("dateRange");
+  elements.statusMessage = document.getElementById("statusMessage");
+  elements.fileMeta = document.getElementById("fileMeta");
+}
+
+function wireEvents() {
+  elements.csvInput.addEventListener("change", (event) => {
+    const [file] = event.target.files;
+    if (file) loadCsvFile(file);
+    event.target.value = "";
+  });
+
+  elements.sampleButton.addEventListener("click", () => {
+    loadCsvText(sampleCsv, "예시 데이터.csv", "예시 데이터가 적용되었습니다.");
+  });
+
+  elements.applyMapping.addEventListener("click", () => {
+    const nextMapping = {};
+    for (const definition of fieldDefinitions) {
+      const select = elements.mappingForm.querySelector(`[name="${definition.key}"]`);
+      nextMapping[definition.key] = select?.value || "";
+    }
+    state.mapping = nextMapping;
+    renderMappingForm();
+    renderDashboard();
+  });
+
+  elements.dropZone.addEventListener("click", () => elements.csvInput.click());
+  elements.dropZone.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      elements.csvInput.click();
+    }
+  });
+
+  ["dragenter", "dragover"].forEach((type) => {
+    elements.dropZone.addEventListener(type, (event) => {
+      event.preventDefault();
+      elements.dropZone.classList.add("is-over");
+    });
+  });
+
+  ["dragleave", "drop"].forEach((type) => {
+    elements.dropZone.addEventListener(type, (event) => {
+      event.preventDefault();
+      elements.dropZone.classList.remove("is-over");
+    });
+  });
+
+  elements.dropZone.addEventListener("drop", (event) => {
+    const [file] = event.dataTransfer.files;
+    if (!file) return;
+    loadCsvFile(file);
+  });
+}
+
+async function loadCsvFile(file) {
+  if (!file.name.toLowerCase().endsWith(".csv")) {
+    setStatus("CSV 파일만 사용할 수 있습니다.", true);
+    return;
+  }
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const text = decodeCsvBuffer(buffer);
+    loadCsvText(text, file.name, `${file.name} 로드 완료`);
+  } catch (error) {
+    setStatus(`파일을 읽지 못했습니다. ${error.message}`, true);
+  }
+}
+
+function decodeCsvBuffer(buffer) {
+  const candidates = [];
+
+  for (const encoding of ["utf-8", "euc-kr"]) {
+    try {
+      const text = new TextDecoder(encoding, { fatal: false }).decode(buffer);
+      const replacements = (text.match(/\uFFFD/g) || []).length;
+      candidates.push({ encoding, text, replacements });
+    } catch {
+      continue;
+    }
+  }
+
+  if (!candidates.length) {
+    throw new Error("브라우저가 CSV 인코딩을 해석하지 못했습니다.");
+  }
+
+  candidates.sort((a, b) => a.replacements - b.replacements);
+  return candidates[0].text;
+}
+
+function loadCsvText(text, datasetName, metaText) {
+  try {
+    const table = parseCsv(text);
+    if (table.length < 2) {
+      throw new Error("헤더와 데이터 행이 필요합니다.");
+    }
+
+    const headers = makeUniqueHeaders(table[0].map(cleanHeader));
+    const rows = table.slice(1).map((row) => rowToRecord(headers, row));
+
+    state.datasetName = datasetName;
+    state.headers = headers;
+    state.rows = rows;
+    state.mapping = autoMapHeaders(headers);
+
+    elements.fileMeta.textContent = metaText;
+    renderMappingForm();
+    renderDashboard();
+  } catch (error) {
+    setStatus(`CSV 처리 실패: ${error.message}`, true);
+  }
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const next = text[index + 1];
+
+    if (inQuotes) {
+      if (char === '"') {
+        if (next === '"') {
+          field += '"';
+          index += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += char;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = true;
+    } else if (char === ",") {
+      row.push(field);
+      field = "";
+    } else if (char === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else if (char !== "\r") {
+      field += char;
+    }
+  }
+
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  return rows.filter((current) => current.some((value) => String(value).trim() !== ""));
+}
+
+function cleanHeader(header, index) {
+  const cleaned = String(header ?? "")
+    .replace(/^\uFEFF/, "")
+    .trim();
+  return cleaned || `column_${index + 1}`;
+}
+
+function makeUniqueHeaders(headers) {
+  const counts = new Map();
+  return headers.map((header) => {
+    const count = counts.get(header) || 0;
+    counts.set(header, count + 1);
+    return count === 0 ? header : `${header}_${count + 1}`;
+  });
+}
+
+function rowToRecord(headers, row) {
+  return headers.reduce((record, header, index) => {
+    record[header] = String(row[index] ?? "").trim();
+    return record;
+  }, {});
+}
+
+function autoMapHeaders(headers) {
+  const normalizedHeaders = headers.map((header) => ({ header, normalized: normalize(header) }));
+  const mapping = {};
+
+  for (const definition of fieldDefinitions) {
+    const aliases = definition.aliases.map(normalize);
+    const exact = normalizedHeaders.find((item) => aliases.includes(item.normalized));
+    const partial = normalizedHeaders.find((item) =>
+      aliases.some((alias) => item.normalized.includes(alias) || alias.includes(item.normalized)),
+    );
+    mapping[definition.key] = (exact || partial)?.header || "";
+  }
+
+  return mapping;
+}
+
+function normalize(value) {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[\s_\-()[\]{}./\\]/g, "")
+    .trim();
+}
+
+function renderEmptyDashboard() {
+  renderMappingForm();
+  elements.kpiGrid.innerHTML = [
+    ["총 어획량", "-", "CSV 업로드 후 자동 집계", "teal"],
+    ["총 수출액", "-", "CSV 업로드 후 자동 집계", "blue"],
+    ["평균 만족도", "-", "CSV 업로드 후 자동 집계", "amber"],
+    ["총 안전사고 건수", "-", "CSV 업로드 후 자동 집계", "red"],
+  ]
+    .map(
+      ([label, value, note, tone]) => `<article class="kpi-card" data-tone="${tone}">
+        <div class="kpi-label">${label}</div>
+        <div class="kpi-value">${value}</div>
+        <div class="kpi-note">${note}</div>
+      </article>`,
+    )
+    .join("");
+  elements.monthlyChart.innerHTML = emptyChart("월별 수출액 데이터 대기", 820, 316);
+  elements.portChart.innerHTML = emptyChart("항만별 위판금액 데이터 대기", 560, 316);
+  elements.riskChart.innerHTML = emptyChart("기상위험도별 사고 데이터 대기", 560, 316);
+  elements.previewTable.innerHTML = `<tbody><tr><td>CSV 파일을 업로드하면 데이터가 표시됩니다.</td></tr></tbody>`;
+}
+
+function renderMappingForm() {
+  if (!state.headers.length) {
+    elements.mappingForm.innerHTML = `<p class="kpi-note">파일을 업로드하면 컬럼을 자동으로 매핑합니다.</p>`;
+    elements.mappingHealth.textContent = "대기";
+    return;
+  }
+
+  const options = [`<option value="">선택 안 함</option>`]
+    .concat(state.headers.map((header) => `<option value="${escapeHtml(header)}">${escapeHtml(header)}</option>`))
+    .join("");
+
+  elements.mappingForm.innerHTML = fieldDefinitions
+    .map((definition) => {
+      const selected = state.mapping[definition.key] || "";
+      const missing = definition.required && !selected;
+      return `<div class="field-row">
+        <label for="map-${definition.key}">${escapeHtml(definition.label)}${definition.required ? " *" : ""}</label>
+        <select id="map-${definition.key}" name="${definition.key}" class="${missing ? "is-required-missing" : ""}">
+          ${options.replace(`value="${escapeHtml(selected)}"`, `value="${escapeHtml(selected)}" selected`)}
+        </select>
+      </div>`;
+    })
+    .join("");
+
+  const missingCount = fieldDefinitions.filter((definition) => definition.required && !state.mapping[definition.key]).length;
+  elements.mappingHealth.textContent = missingCount ? `${missingCount}개 확인 필요` : "자동 완료";
+}
+
+function renderDashboard() {
+  if (!state.rows.length) {
+    renderEmptyDashboard();
+    return;
+  }
+
+  const metrics = calculateMetrics();
+
+  elements.datasetName.textContent = state.datasetName;
+  elements.rowCount.textContent = formatNumber(state.rows.length);
+  elements.dateRange.textContent = metrics.dateRange;
+  setStatus(metrics.missingRequired.length ? `필수 컬럼 확인 필요: ${metrics.missingRequired.join(", ")}` : "대시보드 갱신 완료", metrics.missingRequired.length > 0);
+
+  renderKpis(metrics);
+  renderCharts(metrics);
+  renderPreview();
+}
+
+function calculateMetrics() {
+  const missingRequired = fieldDefinitions
+    .filter((definition) => definition.required && !state.mapping[definition.key])
+    .map((definition) => definition.label);
+
+  const catchValues = numericValues(state.mapping.catch);
+  const exportValues = numericValues(state.mapping.export);
+  const satisfactionValues = numericValues(state.mapping.satisfaction);
+  const accidentValues = numericValues(state.mapping.accidents);
+
+  const landingCurrency = inferCurrency(state.mapping.landing);
+  const exportCurrency = inferCurrency(state.mapping.export);
+  const dateKeys = state.rows.map(makeMonthKey).filter(Boolean).sort();
+
+  return {
+    missingRequired,
+    totalCatch: sum(catchValues),
+    totalExport: sum(exportValues),
+    averageSatisfaction: average(satisfactionValues),
+    totalAccidents: sum(accidentValues),
+    topPorts: groupSum(state.mapping.port, state.mapping.landing).slice(0, 5),
+    monthly: groupMonthlyExport(),
+    riskRows: groupRiskAccidents(),
+    catchCount: catchValues.length,
+    exportCount: exportValues.length,
+    satisfactionCount: satisfactionValues.length,
+    accidentCount: accidentValues.length,
+    landingCurrency,
+    exportCurrency,
+    dateRange: dateKeys.length ? `${shortMonth(dateKeys[0])} - ${shortMonth(dateKeys[dateKeys.length - 1])}` : "-",
+  };
+}
+
+function numericValues(header) {
+  if (!header) return [];
+  return state.rows.map((row) => toNumber(row[header])).filter(Number.isFinite);
+}
+
+function sum(values) {
+  return values.reduce((total, value) => total + value, 0);
+}
+
+function average(values) {
+  return values.length ? sum(values) / values.length : NaN;
+}
+
+function groupSum(labelHeader, valueHeader) {
+  if (!labelHeader || !valueHeader) return [];
+  const groups = new Map();
+
+  for (const row of state.rows) {
+    const label = String(row[labelHeader] || "미분류").trim() || "미분류";
+    const value = toNumber(row[valueHeader]);
+    if (!Number.isFinite(value)) continue;
+    groups.set(label, (groups.get(label) || 0) + value);
+  }
+
+  return [...groups.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value);
+}
+
+function groupMonthlyExport() {
+  if (!state.mapping.export) return [];
+  const groups = new Map();
+
+  for (const row of state.rows) {
+    const key = makeMonthKey(row);
+    const value = toNumber(row[state.mapping.export]);
+    if (!key || !Number.isFinite(value)) continue;
+    groups.set(key, (groups.get(key) || 0) + value);
+  }
+
+  return [...groups.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => a.label.localeCompare(b.label, "ko-KR"));
+}
+
+function groupRiskAccidents() {
+  if (!state.mapping.risk || !state.mapping.accidents) return [];
+  const groups = new Map();
+
+  for (const row of state.rows) {
+    const label = String(row[state.mapping.risk] || "미분류").trim() || "미분류";
+    const value = toNumber(row[state.mapping.accidents]);
+    if (!Number.isFinite(value)) continue;
+    groups.set(label, (groups.get(label) || 0) + value);
+  }
+
+  return [...groups.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => riskSortValue(a.label) - riskSortValue(b.label) || a.label.localeCompare(b.label, "ko-KR"));
+}
+
+function makeMonthKey(row) {
+  if (state.mapping.date) {
+    const raw = String(row[state.mapping.date] || "").trim();
+    const match = raw.match(/^(\d{4})[-./년\s]*(\d{1,2})/);
+    if (match) return `${match[1]}-${String(Number(match[2])).padStart(2, "0")}`;
+  }
+
+  const year = state.mapping.year ? String(row[state.mapping.year] || "").match(/\d{4}/)?.[0] : "";
+  const monthRaw = state.mapping.month ? String(row[state.mapping.month] || "").match(/\d{1,2}/)?.[0] : "";
+  if (year && monthRaw) return `${year}-${String(Number(monthRaw)).padStart(2, "0")}`;
+  if (monthRaw) return `월 ${Number(monthRaw)}`;
+  return "";
+}
+
+function inferCurrency(header) {
+  const normalized = normalize(header || "");
+  if (normalized.includes("usd") || normalized.includes("dollar")) return "USD";
+  if (normalized.includes("krw") || normalized.includes("won") || normalized.includes("원")) return "KRW";
+  return "";
+}
+
+function renderKpis(metrics) {
+  const cards = [
+    {
+      label: "총 어획량",
+      value: `${formatNumber(metrics.totalCatch, 1)} 톤`,
+      note: `${formatNumber(metrics.catchCount)}건 기준`,
+      tone: "teal",
+    },
+    {
+      label: "총 수출액",
+      value: formatMoney(metrics.totalExport, metrics.exportCurrency),
+      note: `${formatNumber(metrics.exportCount)}건 기준`,
+      tone: "blue",
+    },
+    {
+      label: "평균 만족도",
+      value: Number.isFinite(metrics.averageSatisfaction) ? `${formatNumber(metrics.averageSatisfaction, 1)}점` : "-",
+      note: `${formatNumber(metrics.satisfactionCount)}건 평균`,
+      tone: "amber",
+    },
+    {
+      label: "총 안전사고 건수",
+      value: `${formatNumber(metrics.totalAccidents)}건`,
+      note: `${formatNumber(metrics.accidentCount)}건 기준`,
+      tone: "red",
+    },
+  ];
+
+  elements.kpiGrid.innerHTML = cards
+    .map(
+      (card) => `<article class="kpi-card" data-tone="${card.tone}">
+        <div class="kpi-label">${escapeHtml(card.label)}</div>
+        <div class="kpi-value">${escapeHtml(card.value)}</div>
+        <div class="kpi-note">${escapeHtml(card.note)}</div>
+      </article>`,
+    )
+    .join("");
+}
+
+function renderCharts(metrics) {
+  elements.monthlySummary.textContent = metrics.monthly.length ? `${metrics.monthly.length}개월` : "데이터 없음";
+  elements.portSummary.textContent = metrics.topPorts.length ? metrics.topPorts[0].label : "데이터 없음";
+  elements.riskSummary.textContent = metrics.riskRows.length ? `${metrics.riskRows.length}개 등급` : "데이터 없음";
+
+  elements.monthlyChart.innerHTML = renderLineChart(metrics.monthly, metrics.exportCurrency);
+  elements.portChart.innerHTML = renderHorizontalBars(metrics.topPorts, metrics.landingCurrency);
+  elements.riskChart.innerHTML = renderVerticalBars(metrics.riskRows);
+}
+
+function renderLineChart(rows, currency) {
+  if (!rows.length) return emptyChart("월별 수출액 데이터 없음", 820, 316);
+
+  const width = 820;
+  const height = 316;
+  const margin = { top: 20, right: 24, bottom: 48, left: 74 };
+  const plotW = width - margin.left - margin.right;
+  const plotH = height - margin.top - margin.bottom;
+  const maxValue = Math.max(...rows.map((row) => row.value), 0);
+  const yMax = niceMax(maxValue);
+  const x = (index) => margin.left + (rows.length === 1 ? plotW / 2 : (index / (rows.length - 1)) * plotW);
+  const y = (value) => margin.top + plotH - (value / yMax) * plotH;
+  const points = rows.map((row, index) => `${x(index)},${y(row.value)}`).join(" ");
+  const labelStep = Math.max(1, Math.ceil(rows.length / 8));
+  const ticks = makeTicks(yMax, 4);
+
+  let svg = `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="월별 수출액 추이">`;
+  for (const tick of ticks) {
+    const yy = y(tick);
+    svg += `<line class="grid-line" x1="${margin.left}" y1="${yy}" x2="${width - margin.right}" y2="${yy}"></line>`;
+    svg += `<text class="tick-label" x="${margin.left - 10}" y="${yy + 4}" text-anchor="end">${escapeHtml(formatCompact(tick, currency))}</text>`;
+  }
+
+  svg += `<line class="axis" x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}"></line>`;
+  svg += `<line class="axis" x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}"></line>`;
+  svg += `<polyline points="${points}" fill="none" stroke="#2864b7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>`;
+
+  rows.forEach((row, index) => {
+    svg += `<circle cx="${x(index)}" cy="${y(row.value)}" r="4.5" fill="#087f7a"></circle>`;
+    if (index % labelStep === 0 || index === rows.length - 1) {
+      svg += `<text class="tick-label" x="${x(index)}" y="${height - 18}" text-anchor="middle">${escapeHtml(shortMonth(row.label))}</text>`;
+    }
+  });
+
+  const best = rows.reduce((top, row) => (row.value > top.value ? row : top), rows[0]);
+  svg += `<text class="chart-value" x="${width - margin.right}" y="18" text-anchor="end">최고 ${escapeHtml(best.label)} ${escapeHtml(formatCompact(best.value, currency))}</text>`;
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderHorizontalBars(rows, currency) {
+  if (!rows.length) return emptyChart("항만별 위판금액 데이터 없음", 560, 316);
+
+  const width = 560;
+  const height = 316;
+  const margin = { top: 18, right: 98, bottom: 26, left: 112 };
+  const plotW = width - margin.left - margin.right;
+  const barH = 28;
+  const gap = 19;
+  const maxValue = Math.max(...rows.map((row) => row.value), 0);
+  const xMax = niceMax(maxValue);
+
+  let svg = `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="항만별 위판금액 TOP 5">`;
+  rows.forEach((row, index) => {
+    const y = margin.top + index * (barH + gap);
+    const barW = Math.max(2, (row.value / xMax) * plotW);
+    svg += `<text class="chart-label" x="${margin.left - 10}" y="${y + 19}" text-anchor="end">${escapeHtml(truncate(row.label, 8))}</text>`;
+    svg += `<rect x="${margin.left}" y="${y}" width="${barW}" height="${barH}" rx="5" fill="${barColor(index)}"></rect>`;
+    svg += `<text class="chart-value" x="${margin.left + barW + 8}" y="${y + 19}">${escapeHtml(formatCompact(row.value, currency))}</text>`;
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderVerticalBars(rows) {
+  if (!rows.length) return emptyChart("기상위험도별 사고 데이터 없음", 560, 316);
+
+  const width = 560;
+  const height = 316;
+  const margin = { top: 22, right: 24, bottom: 50, left: 54 };
+  const plotW = width - margin.left - margin.right;
+  const plotH = height - margin.top - margin.bottom;
+  const maxValue = Math.max(...rows.map((row) => row.value), 0);
+  const yMax = niceMax(maxValue);
+  const y = (value) => margin.top + plotH - (value / yMax) * plotH;
+  const band = plotW / rows.length;
+  const barW = Math.min(72, band * 0.54);
+
+  let svg = `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="기상위험도별 사고 건수 비교">`;
+  for (const tick of makeTicks(yMax, 4)) {
+    const yy = y(tick);
+    svg += `<line class="grid-line" x1="${margin.left}" y1="${yy}" x2="${width - margin.right}" y2="${yy}"></line>`;
+    svg += `<text class="tick-label" x="${margin.left - 8}" y="${yy + 4}" text-anchor="end">${escapeHtml(formatNumber(tick))}</text>`;
+  }
+
+  svg += `<line class="axis" x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}"></line>`;
+
+  rows.forEach((row, index) => {
+    const cx = margin.left + band * index + band / 2;
+    const top = y(row.value);
+    const h = height - margin.bottom - top;
+    svg += `<rect x="${cx - barW / 2}" y="${top}" width="${barW}" height="${h}" rx="5" fill="${riskColor(row.label)}"></rect>`;
+    svg += `<text class="chart-value" x="${cx}" y="${Math.max(14, top - 8)}" text-anchor="middle">${escapeHtml(formatNumber(row.value))}</text>`;
+    svg += `<text class="chart-label" x="${cx}" y="${height - 20}" text-anchor="middle">${escapeHtml(truncate(row.label, 7))}</text>`;
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+function emptyChart(message, width, height) {
+  return `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(message)}">
+    <rect x="0" y="0" width="${width}" height="${height}" rx="8" fill="#f8fafc"></rect>
+    <text class="empty-chart" x="${width / 2}" y="${height / 2}" text-anchor="middle">${escapeHtml(message)}</text>
+  </svg>`;
+}
+
+function renderPreview() {
+  const headers = state.headers.slice(0, 9);
+  const rows = state.rows.slice(0, 8);
+  elements.previewSummary.textContent = `${formatNumber(rows.length)} / ${formatNumber(state.rows.length)}행`;
+
+  const thead = `<thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>`;
+  const tbody = `<tbody>${rows
+    .map((row) => `<tr>${headers.map((header) => `<td>${escapeHtml(row[header])}</td>`).join("")}</tr>`)
+    .join("")}</tbody>`;
+
+  elements.previewTable.innerHTML = thead + tbody;
+}
+
+function toNumber(value) {
+  let text = String(value ?? "").trim();
+  if (!text) return NaN;
+
+  const isParenthesized = /^\(.*\)$/.test(text);
+  text = text.replace(/,/g, "").replace(/[^\d+\-.]/g, "");
+
+  if (!text || text === "-" || text === "." || text === "+") return NaN;
+  const number = Number(text);
+  if (!Number.isFinite(number)) return NaN;
+  return isParenthesized ? -Math.abs(number) : number;
+}
+
+function formatMoney(value, currency) {
+  if (currency === "USD") return `${formatNumber(value)}`;
+  if (currency === "KRW") return `${formatNumber(value)}원`;
+  return formatNumber(value);
+}
+
+function formatCompact(value, currency = "") {
+  const abs = Math.abs(value);
+  let suffix = "";
+  let scaled = value;
+
+  if (abs >= 1_000_000_000) {
+    suffix = "B";
+    scaled = value / 1_000_000_000;
+  } else if (abs >= 1_000_000) {
+    suffix = "M";
+    scaled = value / 1_000_000;
+  } else if (abs >= 1_000) {
+    suffix = "K";
+    scaled = value / 1_000;
+  }
+
+  const prefix = currency === "USD" ? "$" : "";
+  const postfix = currency === "KRW" ? "원" : "";
+  return `${prefix}${formatNumber(scaled, abs >= 1_000 ? 1 : 0)}${suffix}${postfix}`;
+}
+
+function formatNumber(value, digits = 0) {
+  if (!Number.isFinite(value)) return "-";
+  return value.toLocaleString("ko-KR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
+function niceMax(maxValue) {
+  if (!Number.isFinite(maxValue) || maxValue <= 0) return 1;
+  const exponent = Math.floor(Math.log10(maxValue));
+  const base = 10 ** exponent;
+  const normalized = maxValue / base;
+  const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  return nice * base;
+}
+
+function makeTicks(maxValue, count) {
+  const ticks = [];
+  for (let index = 0; index <= count; index += 1) {
+    ticks.push((maxValue / count) * index);
+  }
+  return ticks;
+}
+
+function shortMonth(label) {
+  const match = String(label).match(/^(\d{4})-(\d{2})$/);
+  return match ? `${match[1].slice(2)}.${Number(match[2])}` : label;
+}
+
+function truncate(value, maxLength) {
+  const text = String(value ?? "");
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+}
+
+function riskSortValue(label) {
+  const normalized = normalize(label);
+  if (["low", "낮음", "관심", "양호"].some((token) => normalized.includes(normalize(token)))) return 1;
+  if (["medium", "mid", "보통", "주의"].some((token) => normalized.includes(normalize(token)))) return 2;
+  if (["high", "높음", "경계", "위험", "심각"].some((token) => normalized.includes(normalize(token)))) return 3;
+  return 4;
+}
+
+function riskColor(label) {
+  const value = riskSortValue(label);
+  if (value === 1) return "#26734d";
+  if (value === 2) return "#b85f00";
+  if (value === 3) return "#b33434";
+  return "#2864b7";
+}
+
+function barColor(index) {
+  return ["#087f7a", "#2864b7", "#26734d", "#b85f00", "#6c5a96"][index % 5];
+}
+
+function setStatus(message, isWarning = false) {
+  elements.statusMessage.textContent = message;
+  elements.statusMessage.style.color = isWarning ? "var(--amber)" : "var(--muted)";
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => {
+    const map = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return map[char];
+  });
+}
+
+    </script>
+  </body>
+</html>
