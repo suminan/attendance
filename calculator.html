@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>계산기 앱</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.calculator {
+  width: 320px;
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+}
+
+#display {
+  width: 100%;
+  height: 70px;
+  margin-bottom: 16px;
+  padding: 10px;
+  font-size: 30px;
+  text-align: right;
+  border: none;
+  border-radius: 12px;
+  background: #e2e8f0;
+  color: #111827;
+  box-sizing: border-box;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+button {
+  height: 60px;
+  font-size: 22px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: #cbd5e1;
+}
+
+button:hover {
+  background: #94a3b8;
+}
+
+.operator {
+  background: #38bdf8;
+  color: white;
+}
+
+.operator:hover {
+  background: #0284c7;
+}
+
+.clear {
+  background: #fb7185;
+  color: white;
+}
+
+.clear:hover {
+  background: #e11d48;
+}
+
+.equal {
+  background: #22c55e;
+  color: white;
+}
+
+.equal:hover {
+  background: #16a34a;
+}
+</style>
+</head>
+
+<body>
+
+<div class="calculator">
+  <input type="text" id="display" disabled>
+
+  <div class="buttons">
+    <button class="clear" onclick="clearDisplay()">C</button>
+    <button onclick="deleteLast()">⌫</button>
+    <button onclick="appendValue('%')">%</button>
+    <button class="operator" onclick="appendValue('/')">÷</button>
+
+    <button onclick="appendValue('7')">7</button>
+    <button onclick="appendValue('8')">8</button>
+    <button onclick="appendValue('9')">9</button>
+    <button class="operator" onclick="appendValue('*')">×</button>
+
+    <button onclick="appendValue('4')">4</button>
+    <button onclick="appendValue('5')">5</button>
+    <button onclick="appendValue('6')">6</button>
+    <button class="operator" onclick="appendValue('-')">−</button>
+
+    <button onclick="appendValue('1')">1</button>
+    <button onclick="appendValue('2')">2</button>
+    <button onclick="appendValue('3')">3</button>
+    <button class="operator" onclick="appendValue('+')">+</button>
+
+    <button onclick="appendValue('0')">0</button>
+    <button onclick="appendValue('.')">.</button>
+    <button class="equal" onclick="calculate()">=</button>
+  </div>
+</div>
+
+<script>
+const display = document.getElementById("display");
+
+function appendValue(value) {
+  display.value += value;
+}
+
+function clearDisplay() {
+  display.value = "";
+}
+
+function deleteLast() {
+  display.value = display.value.slice(0, -1);
+}
+
+function calculate() {
+  try {
+    if (display.value === "") {
+      alert("계산식을 입력하세요.");
+      return;
+    }
+
+    display.value = eval(display.value);
+  } catch {
+    alert("올바른 계산식이 아닙니다.");
+    display.value = "";
+  }
+}
+</script>
+
+</body>
+</html>
