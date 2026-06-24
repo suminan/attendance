@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AI 페이지 QR코드</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: "맑은 고딕", sans-serif;
+  background: linear-gradient(135deg, #dbeafe, #eef2ff);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  width: 360px;
+  background: white;
+  padding: 30px;
+  border-radius: 24px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+h1 {
+  color: #1e3a8a;
+}
+
+p {
+  color: #555;
+  font-size: 14px;
+}
+
+.qr-box {
+  margin: 24px auto;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 16px;
+  width: fit-content;
+}
+
+img {
+  width: 220px;
+  height: 220px;
+}
+
+button, a {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  text-decoration: none;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+a {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>📱 AI 페이지 QR코드</h1>
+  <p>QR코드를 스캔하면 지정한 Notion 페이지로 이동합니다.</p>
+
+  <div class="qr-box">
+    <img id="qrImage" alt="QR 코드">
+  </div>
+
+  <button onclick="downloadQR()">QR코드 다운로드</button>
+  <a id="pageLink" target="_blank">사이트 바로가기</a>
+</div>
+
+<script>
+const siteUrl = "https://taechajang-imaginethat.notion.site/AI-387c666c871480d6bdeddab5e551d92b";
+
+const qrImage = document.getElementById("qrImage");
+const pageLink = document.getElementById("pageLink");
+
+qrImage.src =
+  "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
+  encodeURIComponent(siteUrl);
+
+pageLink.href = siteUrl;
+
+function downloadQR() {
+  const link = document.createElement("a");
+  link.href = qrImage.src;
+  link.download = "ai-page-qr-code.png";
+  link.click();
+}
+</script>
+
+</body>
+</html>
