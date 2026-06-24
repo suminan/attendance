@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>해양수산 정책 KPI 대시보드</title>
+    <link rel="stylesheet" href="policy-dashboard.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="title-block">
+          <p class="eyebrow">해양수산 데이터 분석</p>
+          <h1>정책 KPI 대시보드</h1>
+        </div>
+        <div class="file-actions" aria-label="CSV 파일 작업">
+          <label class="button primary-button" for="csvInput">CSV 선택</label>
+          <input id="csvInput" type="file" accept=".csv,text/csv" />
+          <button class="button ghost-button" id="sampleButton" type="button">예시 데이터</button>
+        </div>
+      </header>
+
+      <section class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="CSV 파일 드래그 앤 드롭 또는 선택">
+        <div class="drop-mark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div>
+          <strong>CSV 파일을 여기에 놓기</strong>
+          <p id="fileMeta">CP949 또는 UTF-8 CSV를 자동으로 읽습니다.</p>
+        </div>
+      </section>
+
+      <section class="status-strip" aria-live="polite">
+        <div>
+          <span class="status-label">데이터셋</span>
+          <strong id="datasetName">업로드 대기</strong>
+        </div>
+        <div>
+          <span class="status-label">행 수</span>
+          <strong id="rowCount">0</strong>
+        </div>
+        <div>
+          <span class="status-label">기간</span>
+          <strong id="dateRange">-</strong>
+        </div>
+        <div class="status-message" id="statusMessage">CSV 파일을 드래그 앤 드롭하세요.</div>
+      </section>
+
+      <div class="workspace">
+        <aside class="mapping-panel">
+          <div class="section-heading">
+            <h2>컬럼 매핑</h2>
+            <span id="mappingHealth">대기</span>
+          </div>
+          <form class="mapping-form" id="mappingForm"></form>
+          <button class="button apply-button" id="applyMapping" type="button">매핑 적용</button>
+        </aside>
+
+        <main class="dashboard">
+          <section class="kpi-grid" id="kpiGrid" aria-label="주요 KPI"></section>
+
+          <section class="chart-grid">
+            <article class="chart-panel wide">
+              <div class="section-heading">
+                <h2>월별 수출액 추이</h2>
+                <span id="monthlySummary">-</span>
+              </div>
+              <div class="chart-frame" id="monthlyChart"></div>
+            </article>
+
+            <article class="chart-panel">
+              <div class="section-heading">
+                <h2>항만별 위판금액 TOP 5</h2>
+                <span id="portSummary">-</span>
+              </div>
+              <div class="chart-frame" id="portChart"></div>
+            </article>
+
+            <article class="chart-panel">
+              <div class="section-heading">
+                <h2>기상위험도별 사고 건수</h2>
+                <span id="riskSummary">-</span>
+              </div>
+              <div class="chart-frame" id="riskChart"></div>
+            </article>
+          </section>
+
+          <section class="preview-panel">
+            <div class="section-heading">
+              <h2>데이터 미리보기</h2>
+              <span id="previewSummary">상위 8행</span>
+            </div>
+            <div class="table-wrap">
+              <table id="previewTable"></table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="policy-dashboard.js" charset="utf-8" defer></script>
+  </body>
+</html>
